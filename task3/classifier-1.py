@@ -91,9 +91,10 @@ def feature_sel_kbest(X_train, y, score_func, k):
 # Scaling
 def scaling_minmax(X):
 	X_min = np.expand_dims(np.nanmin(X, axis=0),0)
-	X_max = np.expand_dims(np.nanmax(X, axis=1),0)
+	X_max = np.expand_dims(np.nanmax(X, axis=0),0)
 	X_scaled = 2*(X - X_min) / (X_max - X_min) - 1
 	return X
+
 def scaling_standard(X):
 	X_mean = np.expand_dims(np.nanmean(X, axis=0),0)
 	X_std = np.expand_dims(np.nanstd(X, axis=0),0)
@@ -185,25 +186,31 @@ if __name__ == '__main__':
 	'''
 
 	# Impute NaN
-	#X_train_org = impute_simple(X_train_org,'median')
 	X_test = impute_simple(X_test,'mean')
+	#X_test = impute_simple(X_test,'median')
+	#X_test = impute_knn(X_test, 10, 'uniform')
+	#X_test = impute_iterative(X_test)
 
+	# Scaling - Test
+	#X_test = scaling_standard(X_test)
 
 	#print(X_train_org.shape)
 	
 	# Train-Val Split
-	X_train, X_val, y_train, y_val = train_test_split(X_train_org, y_train_org, test_size=0.1)
+	X_train, X_val, y_train, y_val = train_test_split(X_train_org, y_train_org, test_size=0.1, random_state=42)
 	#print(X_train.shape, X_val.shape, y_train.shape, y_val.shape)
+
+
+	# Scaling - Train
+	#X_train = scaling_standard(X_train)
+	#X_train = scaling_minmax(X_train)
 
 	# Impute - Train
 	X_train = impute_simple(X_train, 'mean')
-
-	'''
-	# Show X-y correlation
-	colors = {0:'red',1:'blue',2:'green',3:'orange'}
-	figure = plt.scatter(X_train[:,1],X_train[:,8],c=[colors[y] for y in list(y_train)])
-	plt.show()
-	'''
+	#X_train = impute_simple(X_train, 'median')
+	#X_train = impute_knn(X_train, 10, 'uniform')
+	#X_train = impute_iterative(X_train)
+	
 	'''
 	# Outlier Detection
 	## LocalOutlierFactor
@@ -249,6 +256,12 @@ if __name__ == '__main__':
 
 	## Impute
 	X_val = impute_simple(X_val, 'mean')
+	#X_val = impute_simple(X_val, 'median')
+	#X_val = impute_knn(X_val, 10, 'uniform')
+	#X_val = impute_iterative(X_val)
+
+	## Scaling
+	#X_val = scaling_standard(X_val)
 
 	## Feature selection
 	#X_val = X_val[:,feature_selected_variance]
@@ -293,7 +306,7 @@ if __name__ == '__main__':
 	## Linear SVM
 	#clf = SVC(kernel='linear',C=0.1).fit(X_train, y_train)
 	## RBF SVM
-	#clf1 = SVC(C=1.6, probability=True).fit(X_train_comb, y_train_comb)
+	#clf3 = SVC(C=2.0, probability=True).fit(X_train, y_train)
 	## Gaussian Process
 	#clf = GaussianProcessClassifier(1.0*RBF(1.0)).fit(X_train, y_train)
 	## Decision Tree
@@ -301,7 +314,7 @@ if __name__ == '__main__':
 	## Random Forest
 	#clf = RandomForestClassifier(max_depth=12, max_features=None, random_state=42).fit(X_train, y_train)
 	## Neural Net
-	#clf2 = MLPClassifier(hidden_layer_sizes=(600,),random_state=42).fit(X_train_comb, y_train_comb)
+	#clf3 = MLPClassifier(hidden_layer_sizes=(100,),random_state=42).fit(X_train, y_train)
 	## AdaBoost
 	#clf = AdaBoostClassifier(n_estimators=100, random_state=42).fit(X_train, y_train)
 	## Naive Bayes
@@ -309,16 +322,16 @@ if __name__ == '__main__':
 	## QDA
 	#clf = QuadraticDiscriminantAnalysis(reg_param = 0.6).fit(X_train, y_train)
 	## XGB
-	clf = GradientBoostingClassifier(n_estimators=70).fit(X_train, y_train)
+	clf1 = GradientBoostingClassifier(n_estimators=70).fit(X_train, y_train)
 	## LGMB
-	#clf3 = LGBMClassifier(reg_alpha=1.5).fit(X_train_comb, y_train_comb)
+	clf2 = LGBMClassifier(reg_alpha=1.5).fit(X_train, y_train)
 		
 	# Predict on train
 	#print(clf1.predict_proba(X_train_comb).shape)
 	#print(clf2.predict_proba(X_train_comb).shape)
 	#y_hat_train_proba = (clf1.predict_proba(X_train_comb) + clf2.predict_proba(X_train_comb) + clf3.predict_proba(X_train_comb) + clf4.predict_proba(X_train_comb))/4
-	#y_hat_train_proba = (clf1.predict_proba(X_train_comb)+clf2.predict_proba(X_train_comb)+clf3.predict_proba(X_train_comb))/3
-	y_hat_train_proba = clf.predict_proba(X_train)
+	y_hat_train_proba = (clf1.predict_proba(X_train)+clf2.predict_proba(X_train))/2
+	#y_hat_train_proba = clf.predict_proba(X_train)
 	y_hat_train = np.argmax(y_hat_train_proba,axis=1)
 	score_train = f1_score(y_train, y_hat_train, average='micro')
 	#print(clf1,clf2, clf3, clf4, 'train score', score_train)
@@ -328,7 +341,7 @@ if __name__ == '__main__':
 	# Predict on val
 	#y_hat_val_proba[:,:,i] = (clf1.predict_proba(X_val) + clf2.predict_proba(X_val) + clf3.predict_proba(X_val) + clf4.predict_proba(X_val))/3
 	#y_hat_val_proba[:,:,i] = (clf1.predict_proba(X_val) + clf2.predict_proba(X_val) + clf3.predict_proba(X_val))/3
-	y_hat_val_proba = clf.predict_proba(X_val)
+	y_hat_val_proba = (clf1.predict_proba(X_val) + clf2.predict_proba(X_val))/2
 	
 	# Predict on test
 	#y_hat_test_proba[:,:,i] = (clf1.predict_proba(X_test) + clf2.predict_proba(X_test) + clf3.predict_proba(X_test))/3
@@ -343,16 +356,16 @@ if __name__ == '__main__':
 	#print(y_hat_val)
 	#score_train = balanced_accuracy_score(y_train_comb, y_hat_train)
 	score_val = f1_score(y_val, y_hat_val, average='micro')
-	print(clf, 'val score', score_val)
+	print(clf1, clf2, clf3, 'val score', score_val)
 	#print(clf1, clf2, clf3, 'val score', score_val)
 	#print(clf1, clf2, clf3, clf4, 'val score', score_val)
 	
 	
 	# Test data prediction
-	#y_pred_proba = (clf1.predict_proba(X_test) + clf2.predict_proba(X_test) + clf3.predict_proba(X_test)) / 3
-	y_pred_proba = clf.predict_proba(X_test)
+	y_pred_proba = (clf1.predict_proba(X_test) + clf2.predict_proba(X_test)) / 2
+	#y_pred_proba = clf.predict_proba(X_test)
 	y_pred = np.argmax(y_pred_proba,axis=1)
 	#y_test[~X_test_nan_list] = y_pred
 	#np.savetxt('result_3.csv',np.dstack((np.arange(y_test.size),y_test))[0],"%d,%d",header="id,y")
-	np.savetxt('result_4.csv',np.dstack((np.arange(y_pred.size),y_pred))[0],"%d,%d",header="id,y")
+	np.savetxt('result_7.csv',np.dstack((np.arange(y_pred.size),y_pred))[0],"%d,%d",header="id,y")
 	
