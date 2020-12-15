@@ -2,4 +2,5 @@ c.f. SPINDLE: End-to-end learning from EEG/EMG to extrapolate animal sleep scori
 Preprocessing steps:\
 ```python preprocessing_train_eeg.py``` (labels included) \
 ```python preprocessing_emg.py``` \
-```python preprocessing_test_eeg.py``` \
+```python preprocessing_test_eeg.py``` 
+(preprocessing.py as a whole. Separated to avoid memory explosion.)
