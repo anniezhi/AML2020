@@ -9,8 +9,8 @@ CNN architecture design:\
 ```python cnn_model.py```
 
 CNN train: (modify the training params as you wish)\
-```python cnn_sub12.py```
-```python cnn_sub23.py```
+```python cnn_sub12.py```\
+```python cnn_sub23.py```\
 ```python cnn_sub13.py```
 
 CNN predict on test set:\
