@@ -4,3 +4,17 @@ Preprocessing steps:\
 ```python preprocessing_emg.py``` \
 ```python preprocessing_test_eeg.py``` 
 (preprocessing.py as a whole. Separated to avoid memory explosion.)
+
+CNN architecture design:\
+```python cnn_model.py```
+
+CNN train: (modify the training params as you wish)\
+```python cnn_sub12.py```
+```python cnn_sub23.py```
+```python cnn_sub13.py```
+
+CNN predict on test set:\
+```python cnn_predict.py```
+
+Result write to files:\
+```python result_generate.py```
